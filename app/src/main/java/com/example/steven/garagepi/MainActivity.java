@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.widget.AppCompatTextView;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private String selectedDeviceName = null;
+    private List<String> deviceList = new ArrayList<>();
 
     public void sendGarageToggleRequest(View v) {
     }
@@ -22,10 +24,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void refreshDeviceList(View v) {
-        final ListView deviceList = (ListView) findViewById(R.id.device_list);
-        List<String> backingList = getNearbyCompatibleDevices();
-        ArrayAdapter<String> deviceListAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, backingList);
-        deviceList.setAdapter(deviceListAdapter);
+        deviceList = getNearbyCompatibleDevices();
+        final ListView deviceListView = (ListView) findViewById(R.id.device_list);
+        final BaseAdapter deviceListViewAdapter = (BaseAdapter) deviceListView.getAdapter();
+        deviceListViewAdapter.notifyDataSetChanged();
     }
 
 
@@ -40,10 +42,13 @@ public class MainActivity extends AppCompatActivity {
         final View refreshButton = findViewById(R.id.refresh_button);
         refreshButton.setOnClickListener(this::refreshDeviceList);
 
-        final ListView deviceList = (ListView) findViewById(R.id.device_list);
-        deviceList.setClickable(true);
-        deviceList.setOnItemClickListener((parent, view, position, id) -> selectedDeviceName = ((AppCompatTextView) view).getText().toString());
-        refreshDeviceList(deviceList);
+        final ListView deviceListView = (ListView) findViewById(R.id.device_list);
+        deviceListView.setClickable(true);
+        ArrayAdapter<String> deviceListViewAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, deviceList);
+        deviceListView.setAdapter(deviceListViewAdapter);
+        deviceListView.setOnItemClickListener((parent, view, position, id) -> selectedDeviceName = ((AppCompatTextView) view).getText().toString());
+
+        refreshDeviceList(deviceListView);
     }
 
 }
