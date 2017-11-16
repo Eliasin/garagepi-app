@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name" translatable="false">GaragePi</string>
     <string name="open_close_button_message">OPEN/CLOSE</string>
+    <string name="refresh_button_text">REFRESH</string>
 </resources>
