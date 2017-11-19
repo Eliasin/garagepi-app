@@ -2,6 +2,7 @@ package com.example.steven.garagepi;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,13 +12,16 @@ import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
-    private String selectedDeviceName = null;
     private List<String> deviceList = new ArrayList<>();
+    private UUID uuid = UUID.fromString("9d298d8d-06b4-4da5-b913-0440aa7b4c70");
 
     private int BLUETOOTH_ENABLE_REQUEST = 1;
 
@@ -51,7 +55,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void sendGarageToggleRequest(View v) {
+    private Optional<BluetoothDevice> getBluetoothDeviceFromName(String name) {
+        for (BluetoothDevice bDevice : bluetoothAdapter.getBondedDevices()) {
+            if (bDevice.getName().equals(name)) {
+                return Optional.of(bDevice);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private void sendGarageToggleRequest(BluetoothDevice device) {
+        try {
+            BluetoothSocket socket = device.createRfcommSocketToServiceRecord(uuid);
+            socket.connect();
+            socket.close();
+        }
+        catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
     }
 
     private List<String> getNearbyCompatibleDevices() {
@@ -78,9 +99,6 @@ public class MainActivity extends AppCompatActivity {
 
         checkForBluetoothAdapter();
 
-        final View onOffButton = findViewById(R.id.open_close_button);
-        onOffButton.setOnClickListener(this::sendGarageToggleRequest);
-
         final View refreshButton = findViewById(R.id.refresh_button);
         refreshButton.setOnClickListener(this::refreshDeviceList);
 
@@ -88,7 +106,11 @@ public class MainActivity extends AppCompatActivity {
         deviceListView.setClickable(true);
         ArrayAdapter<String> deviceListViewAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, deviceList);
         deviceListView.setAdapter(deviceListViewAdapter);
-        deviceListView.setOnItemClickListener((parent, view, position, id) -> selectedDeviceName = ((AppCompatTextView) view).getText().toString());
+        deviceListView.setOnItemClickListener((parent, view, position, id) -> {
+            String selectedDeviceName = ((AppCompatTextView) view).getText().toString();
+            Optional<BluetoothDevice> selectedDevice = getBluetoothDeviceFromName(selectedDeviceName);
+            selectedDevice.ifPresent(this::sendGarageToggleRequest);
+        });
 
         refreshDeviceList(deviceListView);
     }
