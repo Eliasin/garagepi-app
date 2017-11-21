@@ -15,6 +15,7 @@ import android.widget.ListView;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -70,8 +71,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendGarageToggleRequest(BluetoothDevice device) {
-        try {
-            BluetoothSocket socket = device.createRfcommSocketToServiceRecord(uuid);
+        try (BluetoothSocket socket = device.createRfcommSocketToServiceRecord(uuid)) {
             socket.connect();
             OutputStream outputStream = socket.getOutputStream();
             InputStream inputStream = socket.getInputStream();
@@ -79,14 +79,8 @@ public class MainActivity extends AppCompatActivity {
             if (inputStream.read(challenge, 0, 29) != 29) {
                 System.err.println("Fragmented challenge");
             }
-            try {
-                String hashed_password = BCrypt.hashpw(deviceKey, new String(challenge));
-                outputStream.write(hashed_password.getBytes());
-            }
-            catch (Exception e) {
-                System.err.println(e.toString());
-            }
-            socket.close();
+            String hashed_password = BCrypt.hashpw((deviceKey + new String(challenge, StandardCharsets.UTF_8)), BCrypt.gensalt());
+            outputStream.write(hashed_password.getBytes());
         }
         catch (IOException e) {
             System.err.println(e.getMessage());
