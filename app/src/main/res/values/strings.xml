@@ -2,4 +2,6 @@
     <string name="app_name" translatable="false">GaragePi</string>
     <string name="open_close_button_message">OPEN/CLOSE</string>
     <string name="refresh_button_text">REFRESH</string>
+    <string name="show_password">Show Password</string>
+    <string name="shared_preference_file">me.steven.pham.garagepi.passwordKey</string>
 </resources>
