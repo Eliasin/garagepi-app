@@ -4,7 +4,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.icu.util.Output;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.AppCompatTextView;
@@ -21,10 +20,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 public class MainActivity extends AppCompatActivity {
 
     private List<String> deviceList = new ArrayList<>();
-    private String deviceKey = "";
+    private String deviceKey = "bike";
     private UUID uuid = UUID.fromString("9d298d8d-06b4-4da5-b913-0440aa7b4c70");
 
     private int BLUETOOTH_ENABLE_REQUEST = 1;
@@ -78,6 +79,13 @@ public class MainActivity extends AppCompatActivity {
             if (inputStream.read(challenge, 0, 29) != 29) {
                 System.err.println("Fragmented challenge");
             }
+            try {
+                String hashed_password = BCrypt.hashpw(deviceKey, new String(challenge));
+                outputStream.write(hashed_password.getBytes());
+            }
+            catch (Exception e) {
+                System.err.println(e.toString());
+            }
             socket.close();
         }
         catch (IOException e) {
@@ -112,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
 
         checkForBluetoothAdapter();
 
-        deviceKey = readKey();
+        //deviceKey = readKey();
 
         final View refreshButton = findViewById(R.id.refresh_button);
         refreshButton.setOnClickListener(this::refreshDeviceList);
