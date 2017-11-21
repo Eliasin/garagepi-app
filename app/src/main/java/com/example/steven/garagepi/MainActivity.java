@@ -17,20 +17,14 @@ import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Scanner;
 import java.util.UUID;
 
 import org.mindrot.jbcrypt.BCrypt;
@@ -128,7 +122,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getOrCreatePasswordKey() {
-        Context context = this;
         SharedPreferences preferences = this.getPreferences(Context.MODE_PRIVATE);
         String passwordKey = preferences.getString("key", null);
         if (passwordKey != null) {
