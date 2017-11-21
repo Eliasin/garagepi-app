@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.icu.util.Output;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.AppCompatTextView;
@@ -13,6 +14,8 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +24,7 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity {
 
     private List<String> deviceList = new ArrayList<>();
+    private String deviceKey = "";
     private UUID uuid = UUID.fromString("9d298d8d-06b4-4da5-b913-0440aa7b4c70");
 
     private int BLUETOOTH_ENABLE_REQUEST = 1;
@@ -68,6 +72,12 @@ public class MainActivity extends AppCompatActivity {
         try {
             BluetoothSocket socket = device.createRfcommSocketToServiceRecord(uuid);
             socket.connect();
+            OutputStream outputStream = socket.getOutputStream();
+            InputStream inputStream = socket.getInputStream();
+            byte[] challenge = new byte[29];
+            if (inputStream.read(challenge, 0, 29) != 29) {
+                System.err.println("Fragmented challenge");
+            }
             socket.close();
         }
         catch (IOException e) {
@@ -91,6 +101,9 @@ public class MainActivity extends AppCompatActivity {
         deviceListViewAdapter.notifyDataSetChanged();
     }
 
+    private String readKey() {
+        return "";
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +111,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         checkForBluetoothAdapter();
+
+        deviceKey = readKey();
 
         final View refreshButton = findViewById(R.id.refresh_button);
         refreshButton.setOnClickListener(this::refreshDeviceList);
