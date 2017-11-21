@@ -3,30 +3,44 @@ package com.example.steven.garagepi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.AppCompatTextView;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.CompoundButton;
 import android.widget.ListView;
+import android.widget.Switch;
+import android.widget.TextView;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Scanner;
 import java.util.UUID;
 
 import org.mindrot.jbcrypt.BCrypt;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final int passwordKeyLength = 9;
+
     private List<String> deviceList = new ArrayList<>();
-    private String deviceKey = "bike";
+    private String deviceKey = "YOU SHOULDN'T SEE THIS";
     private UUID uuid = UUID.fromString("9d298d8d-06b4-4da5-b913-0440aa7b4c70");
 
     private int BLUETOOTH_ENABLE_REQUEST = 1;
@@ -103,8 +117,31 @@ public class MainActivity extends AppCompatActivity {
         deviceListViewAdapter.notifyDataSetChanged();
     }
 
-    private String readKey() {
-        return "";
+    private String generatePasswordOfLength(int n) {
+        StringBuilder password = new StringBuilder();
+        String allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom random = new SecureRandom();
+        while (password.length() != n) {
+            password.append(allowedChars.charAt(random.nextInt(allowedChars.length())));
+        }
+        return new String(password);
+    }
+
+    private String getOrCreatePasswordKey() {
+        Context context = this;
+        SharedPreferences preferences = this.getPreferences(Context.MODE_PRIVATE);
+        String passwordKey = preferences.getString("key", null);
+        if (passwordKey != null) {
+            return passwordKey;
+        }
+        else {
+            SharedPreferences.Editor editor = preferences.edit();
+            passwordKey = generatePasswordOfLength(passwordKeyLength);
+            editor.putString("key", passwordKey);
+            editor.apply();
+            return passwordKey;
+        }
+
     }
 
     @Override
@@ -114,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
 
         checkForBluetoothAdapter();
 
-        //deviceKey = readKey();
+        deviceKey = getOrCreatePasswordKey();
 
         final View refreshButton = findViewById(R.id.refresh_button);
         refreshButton.setOnClickListener(this::refreshDeviceList);
@@ -127,6 +164,19 @@ public class MainActivity extends AppCompatActivity {
             String selectedDeviceName = ((AppCompatTextView) view).getText().toString();
             Optional<BluetoothDevice> selectedDevice = getBluetoothDeviceFromName(selectedDeviceName);
             selectedDevice.ifPresent(this::sendGarageToggleRequest);
+        });
+
+        final TextView devicePasswordTextView = (TextView) findViewById(R.id.device_password);
+        devicePasswordTextView.setText(deviceKey);
+
+        final Switch showPasswordSwitch = (Switch) findViewById(R.id.show_password_switch);
+        showPasswordSwitch.setOnCheckedChangeListener((CompoundButton view, boolean checked) -> {
+            if (checked) {
+                devicePasswordTextView.setVisibility(View.VISIBLE);
+            }
+            else {
+                devicePasswordTextView.setVisibility(View.INVISIBLE);
+            }
         });
 
         refreshDeviceList(deviceListView);
