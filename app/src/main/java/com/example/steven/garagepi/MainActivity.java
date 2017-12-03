@@ -24,7 +24,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.mindrot.jbcrypt.BCrypt;
@@ -69,13 +68,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private Optional<BluetoothDevice> getBluetoothDeviceFromName(String name) {
+    private BluetoothDevice getBluetoothDeviceFromName(String name) {
         for (BluetoothDevice bDevice : bluetoothAdapter.getBondedDevices()) {
             if (bDevice.getName().equals(name)) {
-                return Optional.of(bDevice);
+                return bDevice;
             }
         }
-        return Optional.empty();
+        return null;
     }
 
     private void sendGarageToggleRequest(BluetoothDevice device) {
@@ -155,8 +154,10 @@ public class MainActivity extends AppCompatActivity {
         deviceListView.setAdapter(deviceListViewAdapter);
         deviceListView.setOnItemClickListener((parent, view, position, id) -> {
             String selectedDeviceName = ((AppCompatTextView) view).getText().toString();
-            Optional<BluetoothDevice> selectedDevice = getBluetoothDeviceFromName(selectedDeviceName);
-            selectedDevice.ifPresent(this::sendGarageToggleRequest);
+            BluetoothDevice selectedDevice = getBluetoothDeviceFromName(selectedDeviceName);
+            if (selectedDevice != null) {
+                sendGarageToggleRequest(selectedDevice);
+            }
         });
 
         final TextView devicePasswordTextView = (TextView) findViewById(R.id.device_password);
